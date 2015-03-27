@@ -1,11 +1,5 @@
 package com.company;
 
-import org.apache.commons.io.IOUtils;
-
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-
 public class Relation {
 
     public String rel_type;
@@ -18,5 +12,6 @@ public class Relation {
         file2 = fileTwo;
     }
 
+    // document, includes, declares
 
 }
