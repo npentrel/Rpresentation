@@ -10,7 +10,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+
 public class Main {
+
+    public static int DEBUG = 0;
+    public static int DEBUG_SLIDE = 0;
 
     public static List getRelations(String file) {
 
@@ -49,41 +53,6 @@ public class Main {
 
     }
 
-    public static String getHTMLforSlide(String file) {
-
-        String slide = "";
-
-//        // Open the file
-//        FileInputStream fstream = null;
-//        try {
-//            fstream = new FileInputStream(file);
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        }
-//        BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
-//
-//        String strLine;
-//
-//        //Read File Line By Line
-//        try {
-//            while ((strLine = br.readLine()) != null)   {
-//                // Print the content on the console
-//                System.out.println (strLine);
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        //Close the input stream
-//        try {
-//            br.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
-        return slide;
-    }
-
     public static List stripFiles(Collection c, String s) {
         List<String> stripped = new ArrayList<String>();;
 
@@ -108,11 +77,14 @@ public class Main {
         writer.close();
     }
 
+
     public static void addSlide(String presentation_name, String slide, int offset) throws IOException {
         presentation_name = presentation_name.concat(".html");
         FileWriter writer = new FileWriter(presentation_name, true);
         writer.write("<div class=\"step\" data-y=\"" + offset + "\">");
-
+        writer.write("\n");
+        writer.write(slide);
+        writer.write("\n");
 
         // Open the file
 
@@ -127,48 +99,47 @@ public class Main {
 
         String strLine;
         boolean metadata = true;
-
         //Read File Line By Line
         while ((strLine = br.readLine()) != null)   {
             if (metadata) {
                 if (strLine.contains("</omdoc:metadata>")) {
                     metadata = false;
                 }
-            }
-            if (strLine.contains("</omdoc:omgroup>")) {
-                break;
-            }
+            } else {
 
-            // Print the content on the console
-            System.out.println(strLine);
+                if (DEBUG || DEBUG_SLIDE) {
+                    System.out.println(strLine);
+                }
+
+                if (strLine.contains("</omdoc:omgroup>") || strLine.contains("</body>")) {
+                    break;
+                }
+                writer.write(strLine);
+            }
         }
 
+        writer.write("\n");
         //Close the input stream
         br.close();
 
-
-        writer.write("SLIDE");
-
         writer.write("</div>");
+        writer.write("\n");
+
         writer.close();
     }
 
-    public static void endPresentation(String presentation_name) throws IOException {
+    public static void endPresentation(String presentation_name) {
         presentation_name = presentation_name.concat(".html");
-        FileWriter writer = new FileWriter(presentation_name, true);
-        writer.write("</div></div><script type=\"text/javascript\" src=\"impress.js\">" +
-                "</script></body></html>");
-        writer.close();
+        FileWriter writer = null;
+        try {
+            writer = new FileWriter(presentation_name, true);
+            writer.write("</div></div><script type=\"text/javascript\" src=\"impress.js\">" +
+                    "</script></body></html>");
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
-
-
-
-
-//    def presentation_slide(title, div, out):
-//    offset += 1000
-//            out.write('">')
-//            out.write(div)
-//            out.write('</div>')
 
 
     public static void main(String[] args) throws IOException {
@@ -186,6 +157,7 @@ public class Main {
         );
 
         String htmlDirPath = "/Users/Naomi/localmh/MathHub/MiKoMH/pythagoreantheorem/export/planetary/narration";
+//        String htmlDirPath = "/Users/Naomi/localmh/MathHub/MiKoMH/pythagoreantheorem/export/planetary/content/http..mathhub.info/MiKoMH/pythagoreantheorem";
         File htmlDir = new File(htmlDirPath);
 
         Collection htmlFiles = FileUtils.listFiles(
@@ -213,19 +185,27 @@ public class Main {
         // Extract html information
 
         for (Object f : stripFiles(htmlFiles, htmlDirPath)) {
+
             System.out.println(f);
         }
 
-        for (Object f : htmlFiles) {
-            System.out.println(f);
-            getHTMLforSlide(f.toString());
-        }
+//        for (Object f : htmlFiles) {
+//            System.out.println(f);
+//        }
 
-        addSlide("testpres", "/Users/Naomi/localmh/MathHub/MiKoMH/pythagoreantheorem/export/planetary/narration/measurements", 1000);
-        addSlide("testpres", "/Users/Naomi/localmh/MathHub/MiKoMH/pythagoreantheorem/export/planetary/narration/length", 2000);
+        int x = 1000;
+        String test;
+
+        for (Object slide : htmlFiles) {
+            // if not ".html" file
+            if(!(slide.toString().replaceAll(".*/", "").equals(".html") || slide.toString().replaceAll(".*/", "").equals(".DS_Store"))) {
+                addSlide("testpres", slide.toString(), x);
+                x += 1000;
+            }
+        }
 
         // End presentation
-
+        System.out.println("DONE");
         endPresentation("testpres");
 
 //        Relation r = new Relation("parent", "/file1", "/file2")
