@@ -8,13 +8,16 @@ import org.apache.commons.io.filefilter.RegexFileFilter;
 import java.io.*;
 import java.util.*;
 
+import static org.apache.commons.io.FileUtils.copyFile;
+
 
 public class Main {
 
     public static final boolean DEBUG = false;
     public static final boolean DEBUG_SLIDE = false;
-    public static final boolean DEBUG_RELATION = true;
+    public static final boolean DEBUG_RELATION = false;
     public static final boolean DEBUG_PATHS = false;
+    public static final boolean DEBUG_IMAGES = false;
 
     public static Hashtable<String, String[]> dependencies = new Hashtable<String, String[]>();
     public static Hashtable<String, String> next_topics = new Hashtable<String, String>();
@@ -31,9 +34,6 @@ public class Main {
         }
 
         String[] stringArr = list.toArray(new String[0]);
-        for (int i = 0; i < stringArr.length; i++) {
-            System.out.println(stringArr[i]);
-        }
 
         for (int i = 0; i < stringArr.length; i++) {
             if (stringArr[i].contains("theory ")) {
@@ -44,26 +44,22 @@ public class Main {
 
                 String[] element_includes = new String[includes_num];
                 for (int j = i+1; j < i+1+includes_num && stringArr[j].contains("Includes "); j++) {
-                    element_includes[j-i-1] = stringArr[j];
-                    System.out.println(j-i-1);
-                    if ((j-i-1)==1) {
-                        System.out.println(element_includes[0]);
-                        System.out.println(element_includes[1]);
+                    element_includes[j - i - 1] = stringArr[j];
+                    if (DEBUG_RELATION) {
+                        System.out.println(j - i - 1);
                     }
                 }
-
                 dependencies.put(stringArr[i], element_includes);
                 current_includes.clear();
+                i += includes_num;
             } else {
                 System.out.println("ERROR: " + stringArr[i]);
             }
         }
-
-
     }
 
     public static List stripFiles(Collection c, String s) {
-        List<String> stripped = new ArrayList<String>();;
+        List<String> stripped = new ArrayList<String>();
 
         for (Object f : c) {
             String stripped_filename = f.toString().replace(s,"");
@@ -73,7 +69,33 @@ public class Main {
         return stripped;
     }
 
-    public static void setupPresentation(String presentation_name) throws FileNotFoundException, UnsupportedEncodingException {
+    public static void copyImagesIntoFolder(String sourcePath) {
+        File sourceDir = new File(sourcePath);
+        Collection pictureFiles = FileUtils.listFiles(
+                sourceDir,
+                new RegexFileFilter(".*.(png|jpg|jpeg)"),
+                DirectoryFileFilter.DIRECTORY
+        );
+        for (Object o : pictureFiles) {
+            if (DEBUG_IMAGES) {
+                System.out.println(o);
+            }
+            File image_src = new File(o.toString());
+            String dest_filename = o.toString().replaceAll(".*/", "");
+            File image_dest = new File(dest_filename);
+            if (DEBUG_IMAGES) {
+                System.out.println(dest_filename);
+            }
+            try {
+                copyFile(image_src, image_dest);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void setupPresentation(String presentation_name, String sourcePath) throws FileNotFoundException, UnsupportedEncodingException {
+        copyImagesIntoFolder(sourcePath);
         presentation_name = presentation_name.concat(".html");
         PrintWriter writer = new PrintWriter(presentation_name , "UTF-8");
 
@@ -90,7 +112,7 @@ public class Main {
     public static void addSlide(String presentation_name, String slide, int offset) throws IOException {
         presentation_name = presentation_name.concat(".html");
         FileWriter writer = new FileWriter(presentation_name, true);
-        writer.write("<div class=\"step\" data-y=\"" + offset + "\">");
+        writer.write("<div class=\"step\" data-x=\"" + offset + "\">");
         writer.write("\n");
         writer.write(slide);
         writer.write("\n");
@@ -156,7 +178,9 @@ public class Main {
 //        List<String> modules = new ArrayList<String>();
 
         // Setup paths for the directory with relational data and the export html files
-        String relationsDirPath = "/Users/Naomi/localmh/MathHub/MiKoMH/pythagoreantheorem/relational";
+        String dirPath = "/Users/Naomi/localmh/MathHub/MiKoMH/pythagoreantheorem/";
+        String sourcePath = dirPath + "source";
+        String relationsDirPath = dirPath + "relational";
         File relationsDir = new File(relationsDirPath);
 
         Collection relationFiles = FileUtils.listFiles(
@@ -197,7 +221,7 @@ public class Main {
 
         // Start presentation
 
-        setupPresentation("testpres");
+        setupPresentation("testpres", sourcePath);
 
         // Extract html information
 
@@ -210,18 +234,13 @@ public class Main {
             }
         }
 
-//        for (Object f : htmlFiles) {
-//            System.out.println(f);
-//        }
-
         int x = 1000;
-        String test;
 
         for (Object slide : htmlFiles) {
             // if not ".html" file
             if (!(slide.toString().replaceAll(".*/", "").equals(".html") || slide.toString().replaceAll(".*/", "").equals(".DS_Store"))) {
                 addSlide("testpres", slide.toString(), x);
-                x += 1000;
+                x += 1500;
             }
         }
 
@@ -236,7 +255,7 @@ public class Main {
         while (it.hasMoreElements()) {
             String key = it.nextElement();
             String[] values = dependencies.get(key);
-            System.out.println(key + ": ");
+            System.out.println(key);
             for (int i = 0; i < values.length; i++) {
                 System.out.println(values[0]);
             }
