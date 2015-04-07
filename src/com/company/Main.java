@@ -6,50 +6,59 @@ import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 
 public class Main {
 
-    public static int DEBUG = 0;
-    public static int DEBUG_SLIDE = 0;
+    public static final boolean DEBUG = false;
+    public static final boolean DEBUG_SLIDE = false;
+    public static final boolean DEBUG_RELATION = true;
+    public static final boolean DEBUG_PATHS = false;
 
-    public static List getRelations(String file) {
+    public static Hashtable<String, String[]> dependencies = new Hashtable<String, String[]>();
+    public static Hashtable<String, String> next_topics = new Hashtable<String, String>();
 
-        List<Relation> rel_list = new ArrayList<Relation>();
-        FileInputStream inputStream = null;
+    public static void getRelations(String file) throws IOException {
 
-        // Open the file
-        FileInputStream fstream = null;
-        try {
-            fstream = new FileInputStream(file);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+        BufferedReader in = new BufferedReader(new FileReader(file));
+        String str;
+        List<String> current_includes = new ArrayList<String>();
+
+        List<String> list = new ArrayList<String>();
+        while((str = in.readLine()) != null){
+            list.add(str);
         }
-        BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 
-        String strLine;
+        String[] stringArr = list.toArray(new String[0]);
+        for (int i = 0; i < stringArr.length; i++) {
+            System.out.println(stringArr[i]);
+        }
 
-        //Read File Line By Line
-        try {
-            while ((strLine = br.readLine()) != null)   {
-                // Print the content on the console
-                System.out.println (strLine);
+        for (int i = 0; i < stringArr.length; i++) {
+            if (stringArr[i].contains("theory ")) {
+                int includes_num = 0;
+                for (int j = i+1; j < stringArr.length && stringArr[j].contains("Includes "); j++) {
+                    includes_num++;
+                }
+
+                String[] element_includes = new String[includes_num];
+                for (int j = i+1; j < i+1+includes_num && stringArr[j].contains("Includes "); j++) {
+                    element_includes[j-i-1] = stringArr[j];
+                    System.out.println(j-i-1);
+                    if ((j-i-1)==1) {
+                        System.out.println(element_includes[0]);
+                        System.out.println(element_includes[1]);
+                    }
+                }
+
+                dependencies.put(stringArr[i], element_includes);
+                current_includes.clear();
+            } else {
+                System.out.println("ERROR: " + stringArr[i]);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
-        //Close the input stream
-        try {
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return rel_list;
 
     }
 
@@ -169,12 +178,20 @@ public class Main {
 
         // Extract relational information
 
-        for (Object f : stripFiles(relationFiles, relationsDirPath)) {
-            System.out.println(f);
+        if (DEBUG || DEBUG_PATHS) {
+            System.out.println("\nPATHS: -----------------------------------------------------------------------------------\n");
+            for (Object f : stripFiles(relationFiles, relationsDirPath)) {
+                System.out.println(f);
+            }
         }
 
+        if (DEBUG || DEBUG_PATHS) {
+            System.out.println("\nRELATION: -----------------------------------------------------------------------------------\n");
+        }
         for (Object f : relationFiles) {
-            System.out.println(f);
+            if (DEBUG || DEBUG_PATHS) {
+                System.out.println(f);
+            }
             getRelations(f.toString());
         }
 
@@ -184,9 +201,13 @@ public class Main {
 
         // Extract html information
 
+        if (DEBUG || DEBUG_PATHS) {
+            System.out.println("\nFILE PATHS: -----------------------------------------------------------------------------------\n");
+        }
         for (Object f : stripFiles(htmlFiles, htmlDirPath)) {
-
-            System.out.println(f);
+            if (DEBUG || DEBUG_PATHS) {
+                System.out.println(f);
+            }
         }
 
 //        for (Object f : htmlFiles) {
@@ -198,15 +219,29 @@ public class Main {
 
         for (Object slide : htmlFiles) {
             // if not ".html" file
-            if(!(slide.toString().replaceAll(".*/", "").equals(".html") || slide.toString().replaceAll(".*/", "").equals(".DS_Store"))) {
+            if (!(slide.toString().replaceAll(".*/", "").equals(".html") || slide.toString().replaceAll(".*/", "").equals(".DS_Store"))) {
                 addSlide("testpres", slide.toString(), x);
                 x += 1000;
             }
         }
 
         // End presentation
-        System.out.println("DONE");
         endPresentation("testpres");
+
+        System.out.println("\nCOOOL STUFF\n");
+
+        Enumeration<String> it = dependencies.keys();
+
+        System.out.println(dependencies.size());
+        while (it.hasMoreElements()) {
+            String key = it.nextElement();
+            String[] values = dependencies.get(key);
+            System.out.println(key + ": ");
+            for (int i = 0; i < values.length; i++) {
+                System.out.println(values[0]);
+            }
+        }
+
 
 //        Relation r = new Relation("parent", "/file1", "/file2")
 
