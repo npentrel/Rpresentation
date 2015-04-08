@@ -15,7 +15,7 @@ public class Main {
 
     public static final boolean DEBUG = false;
     public static final boolean DEBUG_SLIDE = false;
-    public static final boolean DEBUG_RELATION = false;
+    public static final boolean DEBUG_RELATION = true;
     public static final boolean DEBUG_PATHS = false;
     public static final boolean DEBUG_IMAGES = false;
 
@@ -247,17 +247,17 @@ public class Main {
         // End presentation
         endPresentation("testpres");
 
-        System.out.println("\nCOOOL STUFF\n");
-
         Enumeration<String> it = dependencies.keys();
 
         System.out.println(dependencies.size());
         while (it.hasMoreElements()) {
             String key = it.nextElement();
             String[] values = dependencies.get(key);
-            System.out.println(key);
-            for (int i = 0; i < values.length; i++) {
-                System.out.println(values[0]);
+            if (DEBUG_RELATION) {
+                System.out.println(key);
+                for (int i = 0; i < values.length; i++) {
+                    System.out.println(values[0]);
+                }
             }
         }
 
