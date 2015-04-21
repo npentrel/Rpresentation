@@ -18,12 +18,14 @@ public class Main {
     public static final boolean DEBUG_RELATION = true;
     public static final boolean DEBUG_PATHS = false;
     public static final boolean DEBUG_IMAGES = false;
+    public static final boolean RELATION_PARSE_ERRORS = false;
+    public static final String MATHHUB_PATH = "/Users/Naomi/localmh/MathHub";
 
     public static Hashtable<String, String[]> dependencies = new Hashtable<String, String[]>();
     public static Hashtable<String, String> next_topics = new Hashtable<String, String>();
 
+    // Reads all relations from the relations directory and adds them to a local table.
     public static void getRelations(String file) throws IOException {
-
         BufferedReader in = new BufferedReader(new FileReader(file));
         String str;
         List<String> current_includes = new ArrayList<String>();
@@ -41,23 +43,42 @@ public class Main {
                 for (int j = i+1; j < stringArr.length && stringArr[j].contains("Includes "); j++) {
                     includes_num++;
                 }
-
+                System.out.println("includesnum: " + includes_num + " " + stringArr[i]);
                 String[] element_includes = new String[includes_num];
                 for (int j = i+1; j < i+1+includes_num && stringArr[j].contains("Includes "); j++) {
-                    element_includes[j - i - 1] = stringArr[j];
-                    if (DEBUG_RELATION) {
-                        System.out.println(j - i - 1);
-                    }
+                    element_includes[j - i - 1] = stringArr[j].replaceAll("(Includes )([^\\ ]*)( http:\\/*)(([^\\/]+)(\\/))", "");
                 }
-                dependencies.put(stringArr[i], element_includes);
+
+//                for (int x = 0; x < element_includes.length; x++) {
+//                    System.out.println(element_includes[x]);
+//                }
+                String new_key = stringArr[i].replaceAll("(theory http:\\/*)(([^\\/]+)\\/)", "").replaceAll("(\\.)(.*)", "");
+                if (!dependencies.containsKey(new_key)) {
+                    dependencies.put(new_key, element_includes);
+                } else {
+                    String[] values = dependencies.get(new_key);
+                    int combined_size = values.length + element_includes.length;
+                    String[] merged_values = new String[combined_size];
+                    for (int m = 0; m < values.length; m++) {
+                        merged_values[m] = values[m];
+                    }
+                    for (int n = values.length; n < combined_size; n++) {
+                        merged_values[n] = element_includes[n-values.length];
+                    }
+                    dependencies.put(new_key, merged_values);
+                }
+
                 current_includes.clear();
                 i += includes_num;
             } else {
-                System.out.println("ERROR: " + stringArr[i]);
+                if (RELATION_PARSE_ERRORS) {
+                    System.out.println("ERROR: " + stringArr[i]);
+                }
             }
         }
     }
 
+    // Takes a list of strings and returns them without the beginning path (s).
     public static List stripFiles(Collection c, String s) {
         List<String> stripped = new ArrayList<String>();
 
@@ -109,10 +130,10 @@ public class Main {
     }
 
 
-    public static void addSlide(String presentation_name, String slide, int offset) throws IOException {
+    public static void addSlide(String presentation_name, String slide, int x_offset, int y_offset) throws IOException {
         presentation_name = presentation_name.concat(".html");
         FileWriter writer = new FileWriter(presentation_name, true);
-        writer.write("<div class=\"step\" data-x=\"" + offset + "\">");
+        writer.write("<div class=\"step\" data-x=\"" + x_offset + "\" data-y=\"" + y_offset + "\">");
         writer.write("\n");
         writer.write(slide);
         writer.write("\n");
@@ -157,7 +178,21 @@ public class Main {
         writer.write("\n");
 
         writer.close();
+        addIncludesSlides(slide);
     }
+
+    public static String getTheorySlidePath(String slide) {
+        String slide_short = slide.replaceAll("(/)(((([^/\n]*)(/)){9}))","").replaceAll(".html", "");
+        String path_short = slide.replaceAll(".*(localmh/MathHub/)","").replaceAll("(export).*", "");
+        String theorySlidePath = path_short + slide_short;
+        System.out.println("4 slide: " + theorySlidePath);
+        return theorySlidePath;
+    }
+
+    public static void addIncludesSlides(String slide) {
+        String theorySlidePath = getTheorySlidePath(slide);
+
+    };
 
     public static void endPresentation(String presentation_name) {
         presentation_name = presentation_name.concat(".html");
@@ -178,7 +213,7 @@ public class Main {
 //        List<String> modules = new ArrayList<String>();
 
         // Setup paths for the directory with relational data and the export html files
-        String dirPath = "/Users/Naomi/localmh/MathHub/MiKoMH/pythagoreantheorem/";
+        String dirPath = MATHHUB_PATH + "/MiKoMH/pythagoreantheorem/";
         String sourcePath = dirPath + "source";
         String relationsDirPath = dirPath + "relational";
         File relationsDir = new File(relationsDirPath);
@@ -239,7 +274,7 @@ public class Main {
         for (Object slide : htmlFiles) {
             // if not ".html" file
             if (!(slide.toString().replaceAll(".*/", "").equals(".html") || slide.toString().replaceAll(".*/", "").equals(".DS_Store"))) {
-                addSlide("testpres", slide.toString(), x);
+                addSlide("testpres", slide.toString(), x, 0);
                 x += 1500;
             }
         }
@@ -254,9 +289,9 @@ public class Main {
             String key = it.nextElement();
             String[] values = dependencies.get(key);
             if (DEBUG_RELATION) {
-                System.out.println(key);
+                System.out.println("Theory path: " + key);
                 for (int i = 0; i < values.length; i++) {
-                    System.out.println(values[0]);
+                    System.out.println("Include path: " + values[i]);
                 }
             }
         }
