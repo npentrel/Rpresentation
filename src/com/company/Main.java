@@ -15,14 +15,55 @@ public class Main {
 
     public static final boolean DEBUG = false;
     public static final boolean DEBUG_SLIDE = false;
-    public static final boolean DEBUG_RELATION = true;
+    public static final boolean DEBUG_RELATION = false;
     public static final boolean DEBUG_PATHS = false;
     public static final boolean DEBUG_IMAGES = false;
     public static final boolean RELATION_PARSE_ERRORS = false;
+
+    // Setup paths for the directory with relational data and the export html files
+    public static final String projectName = "pythagoreantheorem";
+
     public static final String MATHHUB_PATH = "/Users/Naomi/localmh/MathHub";
+    public static final String dirPath = MATHHUB_PATH + "/MiKoMH/" + projectName + "/";
+    public static final String sourcePath = dirPath + "source";
+    public static final String relationsDirPath = dirPath + "relational";
+    public static final String notes_path = sourcePath + "/notes/notes.tex";
 
     public static Hashtable<String, String[]> dependencies = new Hashtable<String, String[]>();
     public static Hashtable<String, String> next_topics = new Hashtable<String, String>();
+
+    public static Vector<String> top_order = new Vector<String>();
+
+
+    public static void getOrder(String notes_path, int level) throws IOException {
+        System.out.println(notes_path);
+
+        File f = new File(notes_path);
+        if(!f.exists() || f.isDirectory()) {
+            return;
+        }
+
+        BufferedReader in = new BufferedReader(new FileReader(notes_path));
+        String str;
+//        List<String> current_includes = new ArrayList<String>();
+
+        List<String> list = new ArrayList<String>();
+        while ((str = in.readLine()) != null){
+            list.add(str);
+        }
+        String[] stringArr = list.toArray(new String[0]);
+
+        String out;
+
+        for (int i = 0; i < stringArr.length; i++) {
+            if (stringArr[i].contains("mhinputref")) {
+                out = stringArr[i].replaceAll("(.)*mhinputref.{1}", "").replaceAll("}(.)*","").replaceAll(".tex","");
+                top_order.add(level + " " + out);
+                getOrder(sourcePath + '/' + out + ".tex", level + 1);
+            }
+        }
+
+    }
 
     // Reads all relations from the relations directory and adds them to a local table.
     public static void getRelations(String file) throws IOException {
@@ -43,10 +84,11 @@ public class Main {
                 for (int j = i+1; j < stringArr.length && stringArr[j].contains("Includes "); j++) {
                     includes_num++;
                 }
-                System.out.println("includesnum: " + includes_num + " " + stringArr[i]);
+
+//                System.out.println("includesnum: " + includes_num + " " + stringArr[i]);
                 String[] element_includes = new String[includes_num];
                 for (int j = i+1; j < i+1+includes_num && stringArr[j].contains("Includes "); j++) {
-                    element_includes[j - i - 1] = stringArr[j].replaceAll("(Includes )([^\\ ]*)( http:\\/*)(([^\\/]+)(\\/))", "");
+                    element_includes[j - i - 1] = stringArr[j].replaceAll("(Includes )([^\\ ]*)( http:\\/*)(([^\\/]+)(\\/))", "").replaceAll("(.omdoc\\?.*)", "");
                 }
 
 //                for (int x = 0; x < element_includes.length; x++) {
@@ -90,6 +132,25 @@ public class Main {
         return stripped;
     }
 
+    public static void removePreviousImages(String sourcePath) {
+        File sourceDir = new File(".");
+        Collection pictureFiles = FileUtils.listFiles(
+                sourceDir,
+                new RegexFileFilter(".*.(png|jpg|jpeg)"),
+                DirectoryFileFilter.DIRECTORY
+        );
+        for (Object o : pictureFiles) {
+            try {
+                File file = new File(o.toString());
+                if(!file.delete()){
+                    System.out.println("Problem deleting: " + file.getName());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public static void copyImagesIntoFolder(String sourcePath) {
         File sourceDir = new File(sourcePath);
         Collection pictureFiles = FileUtils.listFiles(
@@ -116,6 +177,7 @@ public class Main {
     }
 
     public static void setupPresentation(String presentation_name, String sourcePath) throws FileNotFoundException, UnsupportedEncodingException {
+        removePreviousImages(sourcePath);
         copyImagesIntoFolder(sourcePath);
         presentation_name = presentation_name.concat(".html");
         PrintWriter writer = new PrintWriter(presentation_name , "UTF-8");
@@ -130,7 +192,7 @@ public class Main {
     }
 
 
-    public static void addSlide(String presentation_name, String slide, int x_offset, int y_offset) throws IOException {
+    public static String addSlide(String presentation_name, String slide, int x_offset, int y_offset) throws IOException {
         presentation_name = presentation_name.concat(".html");
         FileWriter writer = new FileWriter(presentation_name, true);
         writer.write("<div class=\"step\" data-x=\"" + x_offset + "\" data-y=\"" + y_offset + "\">");
@@ -139,6 +201,7 @@ public class Main {
         writer.write("\n");
 
         // Open the file
+        System.out.println("PRESENTATIONNAME: " + slide);
 
         FileInputStream fstream = null;
         try {
@@ -178,7 +241,7 @@ public class Main {
         writer.write("\n");
 
         writer.close();
-        addIncludesSlides(slide);
+        return addIncludesSlides(slide);
     }
 
     public static String getTheorySlidePath(String slide) {
@@ -189,8 +252,9 @@ public class Main {
         return theorySlidePath;
     }
 
-    public static void addIncludesSlides(String slide) {
+    public static String addIncludesSlides(String slide) {
         String theorySlidePath = getTheorySlidePath(slide);
+        return theorySlidePath;
 
     };
 
@@ -210,12 +274,7 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-//        List<String> modules = new ArrayList<String>();
 
-        // Setup paths for the directory with relational data and the export html files
-        String dirPath = MATHHUB_PATH + "/MiKoMH/pythagoreantheorem/";
-        String sourcePath = dirPath + "source";
-        String relationsDirPath = dirPath + "relational";
         File relationsDir = new File(relationsDirPath);
 
         Collection relationFiles = FileUtils.listFiles(
@@ -224,8 +283,7 @@ public class Main {
                 DirectoryFileFilter.DIRECTORY
         );
 
-        String htmlDirPath = "/Users/Naomi/localmh/MathHub/MiKoMH/pythagoreantheorem/export/planetary/narration";
-//        String htmlDirPath = "/Users/Naomi/localmh/MathHub/MiKoMH/pythagoreantheorem/export/planetary/content/http..mathhub.info/MiKoMH/pythagoreantheorem";
+        String htmlDirPath = "/Users/Naomi/localmh/MathHub/MiKoMH/" + projectName + "/export/planetary/narration";
         File htmlDir = new File(htmlDirPath);
 
         Collection htmlFiles = FileUtils.listFiles(
@@ -234,6 +292,15 @@ public class Main {
                 DirectoryFileFilter.DIRECTORY
         );
 
+        for (Object o : htmlFiles) {
+            System.out.println(o);
+        }
+        System.out.println("-----------------------------------------------------------------------------------\n");
+        getOrder(notes_path, 0);
+        System.out.println("-----------------------------------------------------------------------------------\n");
+        for (Object o : top_order) {
+            System.out.println(o);
+        }
 
         // Extract relational information
 
@@ -270,14 +337,78 @@ public class Main {
         }
 
         int x = 1000;
+        int y = 0;
 
-        for (Object slide : htmlFiles) {
-            // if not ".html" file
-            if (!(slide.toString().replaceAll(".*/", "").equals(".html") || slide.toString().replaceAll(".*/", "").equals(".DS_Store"))) {
-                addSlide("testpres", slide.toString(), x, 0);
-                x += 1500;
+        for (Object o : top_order) {
+            String slidePath = htmlDirPath + '/' + o.toString().replaceAll("[0-9]*( )*", "") + ".html";
+
+            File f = new File(slidePath);
+            if(!f.exists() || f.isDirectory()) {
+                continue;
             }
+
+            System.out.println("HTML:" + slidePath);
+
+            String DependenciesKey = addSlide("testpres", slidePath.toString(), x, y);
+
+            System.out.println("!!SLIDE: " + slidePath.toString());
+            if (dependencies.containsKey(DependenciesKey)) {
+                String[] values = dependencies.get(DependenciesKey);
+                for (int i = 0; i < values.length; i++) {
+                    if (values[i].contains(projectName)) {
+                        y += 1000;
+
+                        System.out.println("yes");
+                        String dependentSlidePath = htmlDirPath.concat(values[i].toString().replaceAll("MiKoMH/" + projectName, "")).concat(".html");
+                        System.out.println("DEP:" + dependentSlidePath);
+
+                        addSlide("testpres", dependentSlidePath, x, y);
+
+
+//                        int index = top_order.indexOf(o);
+//                        char currentLevel = o.toString().charAt(index);
+//
+//                        boolean found = false;
+//                        for (Object p : top_order) {
+//                            if (o == p) {
+//                                found = true;
+//                                break;
+//                            }
+//                        }
+
+//                        add until number changes
+
+
+                    }
+                }
+                y = 0;
+            }
+            x += 1500;
+
         }
+
+//        for (Object slide : htmlFiles) {
+//            // if not ".html" file
+//            if (!(slide.toString().replaceAll(".*/", "").equals(".html") || slide.toString().replaceAll(".*/", "").equals(".DS_Store"))) {
+//                String DependenciesKey = addSlide("testpres", slide.toString(), x, y);
+//
+//                System.out.println("!!SLIDE: " + slide.toString());
+//                if (dependencies.containsKey(DependenciesKey)) {
+//                    String[] values = dependencies.get(DependenciesKey);
+//                    for (int i = 0; i < values.length; i++) {
+//                        if (values[i].contains(projectName)) {
+//                            y += 1000;
+//                            System.out.println("yes");
+//                            String slidePath = htmlDirPath.concat(values[i].toString().replaceAll("MiKoMH/" + projectName, "")).concat(".html");
+//                            System.out.println(slidePath);
+//                            addSlide("testpres", slidePath, x, y);
+//                        }
+//                    }
+//                    y = 0;
+//                }
+//                x += 1500;
+//            }
+//        }
 
         // End presentation
         endPresentation("testpres");
@@ -295,7 +426,6 @@ public class Main {
                 }
             }
         }
-
 
 //        Relation r = new Relation("parent", "/file1", "/file2")
 
