@@ -22,7 +22,7 @@ public class Main {
     public static final boolean RELATION_PARSE_ERRORS = false;
     public static final boolean USE_DIALOG = false;
 
-    // Setup paths for the directory with relational data and the export html files
+    // Paths for the directory with relational data and the export html files
     public static String projectName = "pythagoreantheorem";
     public static String mathHubPath = "/Users/Naomi/localmh/MathHub";
     public static String MiKoMH = "/MiKoMH/";
@@ -40,8 +40,10 @@ public class Main {
     public static int SLIDE_OFFSET = 1500;
 
 
-    public static void getOrder(String notes_path, int level) throws IOException {
-        System.out.println(notes_path);
+    public static void getOrderofSlides(String notes_path, int level) throws IOException {
+
+        if (DEBUG)
+            System.out.println(notes_path);
 
         File f = new File(notes_path);
         if(!f.exists() || f.isDirectory()) {
@@ -50,7 +52,6 @@ public class Main {
 
         BufferedReader in = new BufferedReader(new FileReader(notes_path));
         String str;
-//        List<String> current_includes = new ArrayList<String>();
 
         List<String> list = new ArrayList<String>();
         while ((str = in.readLine()) != null){
@@ -64,7 +65,7 @@ public class Main {
             if (!stringArr[i].contains("%") && stringArr[i].contains("mhinputref")) {
                 out = stringArr[i].replaceAll("(.)*mhinputref.{1}", "").replaceAll("}(.)*","").replaceAll(".tex","");
                 top_order.add(level + " " + out);
-                getOrder(sourcePath + '/' + out + ".tex", level + 1);
+                getOrderofSlides(sourcePath + '/' + out + ".tex", level + 1);
             }
         }
 
@@ -310,49 +311,12 @@ public class Main {
         JOptionPane.showConfirmDialog(null, "You can find your presentation in " + currentDirectory, "Presentation created", JOptionPane.PLAIN_MESSAGE);
     }
 
-    public static void main(String[] args) throws IOException {
-
-        if (USE_DIALOG) {
-            updateProjectVariables();
-        }
-
-        File relationsDir = new File(relationsDirPath);
-
-        Collection relationFiles = FileUtils.listFiles(
-                relationsDir,
-                new RegexFileFilter("^(.*?)"),
-                DirectoryFileFilter.DIRECTORY
-        );
-
-
-        File htmlDir = new File(htmlDirPath);
-
-        Collection htmlFiles = FileUtils.listFiles(
-                htmlDir,
-                new RegexFileFilter("^(.*?)"),
-                DirectoryFileFilter.DIRECTORY
-        );
-
-        for (Object o : htmlFiles) {
-            System.out.println(o);
-        }
-        System.out.println("-----------------------------------------------------------------------------------\n");
-        getOrder(notes_path, 0);
-        System.out.println("-----------------------------------------------------------------------------------\n");
-        for (Object o : top_order) {
-            System.out.println(o);
-        }
-
-        // Extract relational information
-
+    public static void extractRelationalInfo(Collection relationFiles) throws IOException {
         if (DEBUG || DEBUG_PATHS) {
             System.out.println("\nPATHS: -----------------------------------------------------------------------------------\n");
             for (Object f : stripFiles(relationFiles, relationsDirPath)) {
                 System.out.println(f);
             }
-        }
-
-        if (DEBUG || DEBUG_PATHS) {
             System.out.println("\nRELATION: -----------------------------------------------------------------------------------\n");
         }
         for (Object f : relationFiles) {
@@ -361,13 +325,9 @@ public class Main {
             }
             getRelations(f.toString());
         }
+    }
 
-        // Start presentation
-
-        setupPresentation(outputPresentationPath, sourcePath);
-
-        // Extract html information
-
+    public static void extractHtmlInformation(Collection htmlFiles) {
         if (DEBUG || DEBUG_PATHS) {
             System.out.println("\nFILE PATHS: -----------------------------------------------------------------------------------\n");
         }
@@ -376,7 +336,9 @@ public class Main {
                 System.out.println(f);
             }
         }
+    }
 
+    public static void addSlidesToPresentation() throws IOException {
         int x = 1000;
         int y = 0;
 
@@ -431,7 +393,7 @@ public class Main {
 
         }
 
-//        for (Object slide : htmlFiles) {
+        //        for (Object slide : htmlFiles) {
 //            // if not ".html" file
 //            if (!(slide.toString().replaceAll(".*/", "").equals(".html") || slide.toString().replaceAll(".*/", "").equals(".DS_Store"))) {
 //                String DependenciesKey = addSlide("testpres", slide.toString(), x, y);
@@ -454,24 +416,43 @@ public class Main {
 //            }
 //        }
 
-        // End presentation
-        endPresentation(outputPresentationPath, presentationLength());
+        if (DEBUG) {
+            Enumeration<String> it = dependencies.keys();
 
-        Enumeration<String> it = dependencies.keys();
-
-        System.out.println(dependencies.size());
-        while (it.hasMoreElements()) {
-            String key = it.nextElement();
-            String[] values = dependencies.get(key);
-            if (DEBUG_RELATION) {
-                System.out.println("Theory path: " + key);
-                for (int i = 0; i < values.length; i++) {
-                    System.out.println("Include path: " + values[i]);
+            System.out.println(dependencies.size());
+            while (it.hasMoreElements()) {
+                String key = it.nextElement();
+                String[] values = dependencies.get(key);
+                if (DEBUG_RELATION) {
+                    System.out.println("Theory path: " + key);
+                    for (int i = 0; i < values.length; i++) {
+                        System.out.println("Include path: " + values[i]);
+                    }
                 }
             }
         }
+    }
 
-//        Relation r = new Relation("parent", "/file1", "/file2")
+    public static void main(String[] args) throws IOException {
+
+        if (USE_DIALOG) {
+            updateProjectVariables();
+        }
+
+        // setup collections of files
+        File relationsDir = new File(relationsDirPath);
+        Collection relationFiles = FileUtils.listFiles(relationsDir, new RegexFileFilter("^(.*?)"), DirectoryFileFilter.DIRECTORY);
+
+        File htmlDir = new File(htmlDirPath);
+        Collection htmlFiles = FileUtils.listFiles(htmlDir, new RegexFileFilter("^(.*?)"), DirectoryFileFilter.DIRECTORY);
+
+        getOrderofSlides(notes_path, 0);
+        extractRelationalInfo(relationFiles);
+
+        setupPresentation(outputPresentationPath, sourcePath);
+        extractHtmlInformation(htmlFiles);
+        addSlidesToPresentation();
+        endPresentation(outputPresentationPath, presentationLength());
 
         printEndDialog();
     }
