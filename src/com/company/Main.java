@@ -31,6 +31,7 @@ public class Main {
     public static String relationsDirPath = dirPath + "relational";
     public static String notes_path = sourcePath + "/notes/notes.tex";
     public static String outputPresentationPath = projectName;
+    public static String htmlDirPath = dirPath + "export/planetary/narration";
 
     public static Hashtable<String, String[]> dependencies = new Hashtable<String, String[]>();
 
@@ -144,13 +145,16 @@ public class Main {
                 DirectoryFileFilter.DIRECTORY
         );
         for (Object o : pictureFiles) {
-            try {
-                File file = new File(o.toString());
-                if(!file.delete()){
-                    System.out.println("Problem deleting: " + file.getName());
+            if (o.toString().matches("(\\./)[^/]*.(png|jpg|jpeg)")) {
+                System.out.println("DELETE: " + o.toString());
+                try {
+                    File file = new File(o.toString());
+                    if (!file.delete()) {
+                        System.out.println("Problem deleting: " + file.getName());
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
         }
     }
@@ -185,7 +189,7 @@ public class Main {
         return (500+(((top_order.size()-1) * SLIDE_OFFSET)/2));
     }
 
-    public static void setupPresentation(String presentation_name, String sourcePath, int length) throws FileNotFoundException, UnsupportedEncodingException {
+    public static void setupPresentation(String presentation_name, String sourcePath) throws FileNotFoundException, UnsupportedEncodingException {
         removePreviousImages(sourcePath);
         copyImagesIntoFolder(sourcePath);
         presentation_name = presentation_name.concat(".html");
@@ -196,10 +200,7 @@ public class Main {
                 "charset=UTF-8\"> <link href=\"styles.css\" rel=\"stylesheet\" /> </head>\n" +
                 "<body> <div id=\"impress\"> <div class=\"no-support-message\"> Sorry! Your \n" +
                 "browser is unable to load this Impress presentation. Please update \n" +
-                "your browser. </div>\n" +
-                "<div id=\"overview\" class=\"step\" data-x=\"" + length +
-                "\" data-y=\"1000\" data-scale=\"" + (top_order.size()-1) +
-                "\"></div>");
+                "your browser. </div>\n");
         writer.close();
     }
 
@@ -207,9 +208,13 @@ public class Main {
     public static String addSlide(String presentation_name, String slide, int x_offset, int y_offset) throws IOException {
         presentation_name = presentation_name.concat(".html");
         FileWriter writer = new FileWriter(presentation_name, true);
-        writer.write("<div class=\"step\" data-x=\"" + x_offset + "\" data-y=\"" + y_offset + "\">");
+        writer.write("<div class=\"step slide\" data-x=\"" + x_offset + "\" data-y=\"" + y_offset + "\">");
+        writer.write("\n");
+        writer.write("<header> </header>\n<main>");
         writer.write("\n");
         writer.write(slide);
+        writer.write("\n");
+        writer.write("</main>");
         writer.write("\n");
 
         // Open the file
@@ -270,12 +275,18 @@ public class Main {
 
     };
 
-    public static void endPresentation(String presentation_name) {
+    public static void endPresentation(String presentation_name, int length) {
         presentation_name = presentation_name.concat(".html");
         FileWriter writer = null;
         try {
             writer = new FileWriter(presentation_name, true);
-            writer.write("</div></div><script type=\"text/javascript\" src=\"impress.js\">" +
+            writer.write("<div id=\"overview\" class=\"step\" data-x=\"" + length + "\n" +
+                    "\" data-y=\"1000\" data-scale=\"" + (top_order.size()-1) +"\n" +
+                    "\">" +
+                    "</div>" +
+                    "</div>" +
+                    "<script type=\"text/javascript\" src=\"impress.js\">" +
+                    "<script type=\"text/javascript\">impress().init();</script>" +
                     "</script></body></html>");
             writer.close();
         } catch (IOException e) {
@@ -294,7 +305,7 @@ public class Main {
         }
     }
 
-    public static void endDialog() {
+    public static void printEndDialog() {
         String currentDirectory = System.getProperty("user.dir");
         JOptionPane.showConfirmDialog(null, "You can find your presentation in " + currentDirectory, "Presentation created", JOptionPane.PLAIN_MESSAGE);
     }
@@ -313,7 +324,7 @@ public class Main {
                 DirectoryFileFilter.DIRECTORY
         );
 
-        String htmlDirPath = "/Users/Naomi/localmh/MathHub/MiKoMH/" + projectName + "/export/planetary/narration";
+
         File htmlDir = new File(htmlDirPath);
 
         Collection htmlFiles = FileUtils.listFiles(
@@ -353,7 +364,7 @@ public class Main {
 
         // Start presentation
 
-        setupPresentation(outputPresentationPath, sourcePath, presentationLength());
+        setupPresentation(outputPresentationPath, sourcePath);
 
         // Extract html information
 
@@ -444,7 +455,7 @@ public class Main {
 //        }
 
         // End presentation
-        endPresentation("testpres");
+        endPresentation(outputPresentationPath, presentationLength());
 
         Enumeration<String> it = dependencies.keys();
 
@@ -462,6 +473,6 @@ public class Main {
 
 //        Relation r = new Relation("parent", "/file1", "/file2")
 
-        endDialog();
+        printEndDialog();
     }
 }
