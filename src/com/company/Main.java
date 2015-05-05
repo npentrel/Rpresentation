@@ -28,7 +28,7 @@ public class Main {
     public static String MiKoMH = "/MiKoMH/";
     public static String dirPath = mathHubPath + MiKoMH + projectName + "/";
     public static String sourcePath = dirPath + "source";
-    public static String relationsDirPath = dirPath + "relational";
+    public static String relationsDirPath = dirPath + "relational2";
     public static String notes_path = sourcePath + "/notes/notes.tex";
     public static String outputPresentationPath = projectName;
     public static String htmlDirPath = dirPath + "export/planetary/narration";

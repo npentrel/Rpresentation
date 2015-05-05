@@ -145,6 +145,9 @@
         scale:     { x: 1, y: 1, z: 1 }
     };
 
+    var counter = 0;
+    var dep_counter = new Array(1000+1).join('0').split('').map(parseFloat);
+
     steps.forEach(function ( el, idx ) {
         var data = el.dataset,
             step = {
@@ -168,7 +171,14 @@
         el.stepData = step;
         
         if ( !el.id ) {
-            el.id = "step-" + (idx + 1);
+            console.log("y: " + counter + " " + step.translate.y + " counter2: " + dep_counter[counter]);
+            if (step.translate.y > 0 && (typeof (data.scale)) === 'undefined') {
+                el.id = "step-" + (counter) + "d" + dep_counter[counter];
+                dep_counter[counter]++;
+            } else {
+                counter++;
+                el.id = "step-" + (counter);
+            }
         }
         
         css(el, {
@@ -255,25 +265,74 @@
     }
     
     // EVENTS
-    
+
     document.addEventListener("keydown", function ( event ) {
-        if ( event.keyCode == 9 || ( event.keyCode >= 32 && event.keyCode <= 34 ) || (event.keyCode >= 37 && event.keyCode <= 40) ) {
+        if ( event.keyCode == 9 || event.keyCode == 79 || ( event.keyCode >= 32 && event.keyCode <= 34 ) || (event.keyCode >= 37 && event.keyCode <= 40) ) {
             var next = active;
             switch( event.keyCode ) {
                 case 33: ; // pg up
                 case 37: ; // left
                 case 38:   // up
-                         next = steps.indexOf( active ) - 1;
-                         next = next >= 0 ? steps[ next ] : steps[ steps.length-1 ];
+//                         next = steps.indexOf( active ) - 1;
+//                         next = next >= 0 ? steps[ next ] : steps[ steps.length-1 ];
+                         if (steps[steps.indexOf(active)].id == "overview") {
+                            var nextId = steps[ steps.length-2 ].id.replace(/d.*/,"");
+                            console.log(nextId);
+                            next = document.getElementById(nextId);
+                         } else {
+                             var nextId = steps[steps.indexOf( active )].id.replace(/(step-)/i, "");
+                             var id = (parseInt(nextId.replace(/[^\d].*/i)) - 1);
+                             nextId = "step-" + id;
+                             console.log(nextId);
+                             next = document.getElementById(nextId);
+                             if (!next) {
+                                next = overview;
+                             }
+                         }
                          break;
                 case 9:  ; // tab
                 case 32: ; // space
                 case 34: ; // pg down
                 case 39: ; // right
+//                         next = steps.indexOf( active ) + 1;
+//                         next = next < steps.length ? steps[ next ] : steps[ 0 ];
+                         if (steps[steps.indexOf(active)].id == "overview") {
+                            var nextId = steps[0].id.replace(/d.*/,"");
+                            console.log(nextId);
+                            next = document.getElementById(nextId);
+                         } else {
+                             var nextId = steps[steps.indexOf( active )].id.replace(/(step-)/i, "");
+                             var id = (parseInt(nextId.replace(/[^\d].*/i)) + 1);
+                             nextId = "step-" + id;
+                             console.log(nextId);
+                             next = document.getElementById(nextId);
+                             if (!next) {
+                                next = overview;
+                             }
+                         }
+                         break;
                 case 40:   // down
-                         next = steps.indexOf( active ) + 1;
-                         next = next < steps.length ? steps[ next ] : steps[ 0 ];
-                         break; 
+                         var nextId = steps[steps.indexOf( active )].id;
+                         if (nextId.match(/d.*/)) {
+                            var currentDependentId = parseInt(nextId.replace(/.*d/,""))+1;
+                            console.log("cur " + currentDependentId);
+                            nextId = nextId.replace(/d.*/,"d" + currentDependentId);
+                         } else {
+                             nextId = nextId + "d" + 0;
+                         }
+                         next = document.getElementById(nextId);
+                         if (!next) {
+                            next = document.getElementById(nextId.replace(/d.*/,""));
+                         }
+                         if (!next) {
+                            next = overview;
+                         }
+                         console.log(nextId);
+                         break;
+//                        next =
+                case 79: // O or o for overview
+                         next = overview;
+                         break;
             }
             
             select(next);
