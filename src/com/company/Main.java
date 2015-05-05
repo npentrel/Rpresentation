@@ -4,6 +4,7 @@ package com.company;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.RegexFileFilter;
+import javax.swing.JOptionPane;
 
 import java.io.*;
 import java.util.*;
@@ -19,20 +20,23 @@ public class Main {
     public static final boolean DEBUG_PATHS = false;
     public static final boolean DEBUG_IMAGES = false;
     public static final boolean RELATION_PARSE_ERRORS = false;
+    public static final boolean USE_DIALOG = false;
 
     // Setup paths for the directory with relational data and the export html files
-    public static final String projectName = "pythagoreantheorem";
-
-    public static final String MATHHUB_PATH = "/Users/Naomi/localmh/MathHub";
-    public static final String dirPath = MATHHUB_PATH + "/MiKoMH/" + projectName + "/";
-    public static final String sourcePath = dirPath + "source";
-    public static final String relationsDirPath = dirPath + "relational";
-    public static final String notes_path = sourcePath + "/notes/notes.tex";
+    public static String projectName = "pythagoreantheorem";
+    public static String mathHubPath = "/Users/Naomi/localmh/MathHub";
+    public static String MiKoMH = "/MiKoMH/";
+    public static String dirPath = mathHubPath + MiKoMH + projectName + "/";
+    public static String sourcePath = dirPath + "source";
+    public static String relationsDirPath = dirPath + "relational";
+    public static String notes_path = sourcePath + "/notes/notes.tex";
+    public static String outputPresentationPath = projectName;
 
     public static Hashtable<String, String[]> dependencies = new Hashtable<String, String[]>();
-    public static Hashtable<String, String> next_topics = new Hashtable<String, String>();
 
     public static Vector<String> top_order = new Vector<String>();
+
+    public static int SLIDE_OFFSET = 1500;
 
 
     public static void getOrder(String notes_path, int level) throws IOException {
@@ -56,7 +60,7 @@ public class Main {
         String out;
 
         for (int i = 0; i < stringArr.length; i++) {
-            if (stringArr[i].contains("mhinputref")) {
+            if (!stringArr[i].contains("%") && stringArr[i].contains("mhinputref")) {
                 out = stringArr[i].replaceAll("(.)*mhinputref.{1}", "").replaceAll("}(.)*","").replaceAll(".tex","");
                 top_order.add(level + " " + out);
                 getOrder(sourcePath + '/' + out + ".tex", level + 1);
@@ -176,7 +180,12 @@ public class Main {
         }
     }
 
-    public static void setupPresentation(String presentation_name, String sourcePath) throws FileNotFoundException, UnsupportedEncodingException {
+    public static int presentationLength() {
+        System.out.println("TOPORDERSIZE: " + top_order.size());
+        return (500+(((top_order.size()-1) * SLIDE_OFFSET)/2));
+    }
+
+    public static void setupPresentation(String presentation_name, String sourcePath, int length) throws FileNotFoundException, UnsupportedEncodingException {
         removePreviousImages(sourcePath);
         copyImagesIntoFolder(sourcePath);
         presentation_name = presentation_name.concat(".html");
@@ -187,7 +196,10 @@ public class Main {
                 "charset=UTF-8\"> <link href=\"styles.css\" rel=\"stylesheet\" /> </head>\n" +
                 "<body> <div id=\"impress\"> <div class=\"no-support-message\"> Sorry! Your \n" +
                 "browser is unable to load this Impress presentation. Please update \n" +
-                "your browser. </div>\n");
+                "your browser. </div>\n" +
+                "<div id=\"overview\" class=\"step\" data-x=\"" + length +
+                "\" data-y=\"1000\" data-scale=\"" + (top_order.size()-1) +
+                "\"></div>");
         writer.close();
     }
 
@@ -271,9 +283,27 @@ public class Main {
         }
     }
 
+    public static void updateProjectVariables() {
+        projectName = JOptionPane.showInputDialog("Welcome to RPresentation! To get started, please tell me the name of the project you want to create a presentation for: ");
+        mathHubPath = JOptionPane.showInputDialog("Please tell me the path to your MathHub folder (e.g. /Users/Naomi/localmh/MathHub): ");
+        String MiKoMH_local = JOptionPane.showInputDialog("Please tell me which directory your project is in (e.g. MiKoMH), if it is in no further directory please leave this blank: ");
+        if (MiKoMH_local != "") {
+            MiKoMH = "/" + MiKoMH_local + "/";
+        } else {
+            MiKoMH = "/";
+        }
+    }
+
+    public static void endDialog() {
+        String currentDirectory = System.getProperty("user.dir");
+        JOptionPane.showConfirmDialog(null, "You can find your presentation in " + currentDirectory, "Presentation created", JOptionPane.PLAIN_MESSAGE);
+    }
 
     public static void main(String[] args) throws IOException {
 
+        if (USE_DIALOG) {
+            updateProjectVariables();
+        }
 
         File relationsDir = new File(relationsDirPath);
 
@@ -323,7 +353,7 @@ public class Main {
 
         // Start presentation
 
-        setupPresentation("testpres", sourcePath);
+        setupPresentation(outputPresentationPath, sourcePath, presentationLength());
 
         // Extract html information
 
@@ -349,7 +379,7 @@ public class Main {
 
             System.out.println("HTML:" + slidePath);
 
-            String DependenciesKey = addSlide("testpres", slidePath.toString(), x, y);
+            String DependenciesKey = addSlide(outputPresentationPath, slidePath.toString(), x, y);
 
             System.out.println("!!SLIDE: " + slidePath.toString());
             if (dependencies.containsKey(DependenciesKey)) {
@@ -364,8 +394,11 @@ public class Main {
 
                         addSlide("testpres", dependentSlidePath, x, y);
 
+                        String currentDependencyKey = dependentSlidePath.replaceAll("(/)(((([^/]*)(/)){9}))", "");
+                        System.out.println("CURRENT DEP KEY: " + currentDependencyKey);
+                        int index = top_order.indexOf(currentDependencyKey);
+                        System.out.println("Index: " + index + "\n\n");
 
-//                        int index = top_order.indexOf(o);
 //                        char currentLevel = o.toString().charAt(index);
 //
 //                        boolean found = false;
@@ -377,13 +410,13 @@ public class Main {
 //                        }
 
 //                        add until number changes
-
+// data-rotate-y="90"
 
                     }
                 }
                 y = 0;
             }
-            x += 1500;
+            x += SLIDE_OFFSET;
 
         }
 
@@ -406,7 +439,7 @@ public class Main {
 //                    }
 //                    y = 0;
 //                }
-//                x += 1500;
+//                x += SLIDE_OFFSET;
 //            }
 //        }
 
@@ -429,6 +462,6 @@ public class Main {
 
 //        Relation r = new Relation("parent", "/file1", "/file2")
 
-
+        endDialog();
     }
 }
