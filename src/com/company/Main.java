@@ -403,7 +403,7 @@ public class Main {
                         String dependentSlidePath = htmlDirPath.concat(values[i].toString().replaceAll("MiKoMH/" + projectName, "")).concat(".html");
                         System.out.println("DEP:" + dependentSlidePath);
 
-                        addSlide("testpres", dependentSlidePath, x, y);
+                        addSlide(outputPresentationPath, dependentSlidePath, x, y);
 
                         String currentDependencyKey = dependentSlidePath.replaceAll("(/)(((([^/]*)(/)){9}))", "");
                         System.out.println("CURRENT DEP KEY: " + currentDependencyKey);
