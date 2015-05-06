@@ -37,7 +37,8 @@ public class Main {
 
     public static Vector<String> top_order = new Vector<String>();
 
-    public static int SLIDE_OFFSET = 1500;
+    public static int slideXOffset = 1250;
+    public static int slideYOffset = 800;
 
 
     public static void getOrderofSlides(String notes_path, int level) throws IOException {
@@ -138,7 +139,7 @@ public class Main {
         return stripped;
     }
 
-    public static void removePreviousImages(String sourcePath) {
+    public static void removePreviousImages() {
         File sourceDir = new File(".");
         Collection pictureFiles = FileUtils.listFiles(
                 sourceDir,
@@ -185,13 +186,8 @@ public class Main {
         }
     }
 
-    public static int presentationLength() {
-        System.out.println("TOPORDERSIZE: " + top_order.size());
-        return (500+(((top_order.size()-1) * SLIDE_OFFSET)/2));
-    }
-
     public static void setupPresentation(String presentation_name, String sourcePath) throws FileNotFoundException, UnsupportedEncodingException {
-        removePreviousImages(sourcePath);
+        removePreviousImages();
         copyImagesIntoFolder(sourcePath);
         presentation_name = presentation_name.concat(".html");
         PrintWriter writer = new PrintWriter(presentation_name , "UTF-8");
@@ -206,10 +202,10 @@ public class Main {
     }
 
 
-    public static String addSlide(String presentation_name, String slide, int x_offset, int y_offset) throws IOException {
+    public static String addSlide(String presentation_name, String slide, int x_offset, int y_offset, int z_offset, int z_rotation) throws IOException {
         presentation_name = presentation_name.concat(".html");
         FileWriter writer = new FileWriter(presentation_name, true);
-        writer.write("<div class=\"step slide\" data-x=\"" + x_offset + "\" data-y=\"" + y_offset + "\">");
+        writer.write("<div class=\"step slide\" data-x=\"" + x_offset + "\" data-y=\"" + y_offset +  "\" data-z=\"" + z_offset + "\" data-rotate-y=\"" + z_rotation + "\">");
         writer.write("\n");
         writer.write("<header> </header>\n<main>");
         writer.write("\n");
@@ -338,8 +334,12 @@ public class Main {
         }
     }
 
+//    public static String getSlidePath() {
+//
+//    }
+
     public static int addSlidesToPresentation() throws IOException {
-        int x = SLIDE_OFFSET;
+        int x = slideXOffset;
         int y = 0;
 
         for (Object o : top_order) {
@@ -352,45 +352,71 @@ public class Main {
 
             System.out.println("HTML:" + slidePath);
 
-            String DependenciesKey = addSlide(outputPresentationPath, slidePath.toString(), x, y);
+            String DependenciesKey = addSlide(outputPresentationPath, slidePath.toString(), x, y, 0, 0);
 
             System.out.println("!!SLIDE: " + slidePath.toString());
             if (dependencies.containsKey(DependenciesKey)) {
                 String[] values = dependencies.get(DependenciesKey);
                 for (int i = 0; i < values.length; i++) {
                     if (values[i].contains(projectName)) {
-                        y += 1000;
+                        y += slideYOffset;
 
                         System.out.println("yes");
                         String dependentSlidePath = htmlDirPath.concat(values[i].toString().replaceAll("MiKoMH/" + projectName, "")).concat(".html");
                         System.out.println("DEP:" + dependentSlidePath);
 
-                        addSlide(outputPresentationPath, dependentSlidePath, x, y);
+                        addSlide(outputPresentationPath, dependentSlidePath, x, y, 0, 0);
 
                         String currentDependencyKey = dependentSlidePath.replaceAll("(/)(((([^/]*)(/)){9}))", "");
                         System.out.println("CURRENT DEP KEY: " + currentDependencyKey);
                         int index = top_order.indexOf(currentDependencyKey);
-                        System.out.println("Index: " + index + "\n\n");
+                        System.out.println("Index: " + index);
 
-//                        char currentLevel = o.toString().charAt(index);
-//
-//                        boolean found = false;
-//                        for (Object p : top_order) {
-//                            if (o == p) {
-//                                found = true;
-//                                break;
-//                            }
-//                        }
+                        int currentLevel = Integer.parseInt(o.toString().replaceAll("( .*)",""));
+                        System.out.println("Currentlevel: " + currentLevel);
 
-//                        add until number changes
-// data-rotate-y="90"
+                        boolean found = false;
+                        boolean sameLevel = true;
+                        int z = 0;
 
+                        for (Object p : top_order) {
+                            if (!found) {
+                                if (o == p) {
+                                    found = true;
+                                    System.out.println("found\n\n");
+                                }
+                            } else {
+                                if (sameLevel) {
+                                    System.out.println("here");
+                                    if (currentLevel == (Integer.parseInt(o.toString().replaceAll("( .*)","")))) {
+                                        System.out.println("SAME LEVEL!!\n\n");
+                                        String dependentContinueSlidePath = htmlDirPath + '/' + p.toString().replaceAll("[0-9]*( )*", "") + ".html";
+
+                                        File g = new File(slidePath);
+                                        if(!g.exists() || g.isDirectory()) {
+                                            continue;
+                                        }
+
+                                        addSlide(outputPresentationPath, dependentContinueSlidePath, x, y, z, 90);
+                                        z -= slideXOffset;
+                                    } else {
+                                        sameLevel = false;
+                                    }
+                                }
+                            }
+                        }
+                    
                     }
                 }
                 y = 0;
             }
-            x += SLIDE_OFFSET;
+            x += slideXOffset;
         }
+
+        for (Object p : top_order) {
+            System.out.println(p);
+        }
+
 
         //        for (Object slide : htmlFiles) {
 //            // if not ".html" file
@@ -411,7 +437,7 @@ public class Main {
 //                    }
 //                    y = 0;
 //                }
-//                x += SLIDE_OFFSET;
+//                x += slideXOffset;
 //            }
 //        }
 
@@ -455,6 +481,8 @@ public class Main {
         int xOverviewLength = addSlidesToPresentation();
         endPresentation(outputPresentationPath, xOverviewLength);
 
-        printEndDialog();
+        if (USE_DIALOG) {
+            printEndDialog();
+        }
     }
 }
