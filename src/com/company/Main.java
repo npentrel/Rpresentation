@@ -131,7 +131,7 @@ public class Main {
         List<String> stripped = new ArrayList<String>();
 
         for (Object f : c) {
-            String stripped_filename = f.toString().replace(s,"");
+            String stripped_filename = f.toString().replace(s, "");
             stripped.add(stripped_filename);
         }
 
@@ -281,8 +281,8 @@ public class Main {
         FileWriter writer = null;
         try {
             writer = new FileWriter(presentation_name, true);
-            writer.write("<div id=\"overview\" class=\"step\" data-x=\"" + length + "\n" +
-                    "\" data-y=\"1000\" data-scale=\"" + (top_order.size()-1) +"\n" +
+            writer.write("<div id=\"overview\" class=\"step\" data-x=\""+ length/2 +"\"\n" +
+                    " data-y=\"0\" data-scale=\"" + (top_order.size()-1) +"\n" +
                     "\">" +
                     "</div>" +
                     "</div>" +
@@ -338,8 +338,8 @@ public class Main {
         }
     }
 
-    public static void addSlidesToPresentation() throws IOException {
-        int x = 1000;
+    public static int addSlidesToPresentation() throws IOException {
+        int x = SLIDE_OFFSET;
         int y = 0;
 
         for (Object o : top_order) {
@@ -390,7 +390,6 @@ public class Main {
                 y = 0;
             }
             x += SLIDE_OFFSET;
-
         }
 
         //        for (Object slide : htmlFiles) {
@@ -431,6 +430,8 @@ public class Main {
                 }
             }
         }
+
+        return x;
     }
 
     public static void main(String[] args) throws IOException {
@@ -451,8 +452,8 @@ public class Main {
 
         setupPresentation(outputPresentationPath, sourcePath);
         extractHtmlInformation(htmlFiles);
-        addSlidesToPresentation();
-        endPresentation(outputPresentationPath, presentationLength());
+        int xOverviewLength = addSlidesToPresentation();
+        endPresentation(outputPresentationPath, xOverviewLength);
 
         printEndDialog();
     }
