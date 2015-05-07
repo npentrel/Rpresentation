@@ -6,7 +6,7 @@ Name: RPresentation
 Lizenz: CC-BY-SA
 Creator: Naomi Pentrel
 
-Some of the CSS and HTML is based on
+Some of the CSS is based on
 http://www.ub.uni-bielefeld.de/library/schulung/praesentationen/impress-js/vorlage/#/start
 by Sebastian Wolf
 

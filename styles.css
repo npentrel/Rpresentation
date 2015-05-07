@@ -1,3 +1,7 @@
+/* Some of the CSS is based on
+   http://www.ub.uni-bielefeld.de/library/schulung/praesentationen/impress-js/vorlage/#/start
+   by Sebastian Wolf */
+
 .no-support-message { display:none; }
 .impress-not-supported .no-support-message { display:block; }
 
