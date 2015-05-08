@@ -21,6 +21,7 @@ public class Main {
     public static final boolean DEBUG_IMAGES = false;
     public static final boolean RELATION_PARSE_ERRORS = false;
     public static final boolean USE_DIALOG = false;
+    public static final boolean SCREENSHOT_HACK = true;
 
     // Paths for the directory with relational data and the export html files
     public static String projectName = "pythagoreantheorem";
@@ -32,6 +33,7 @@ public class Main {
     public static String notes_path = sourcePath + "/notes/notes.tex";
     public static String outputPresentationPath = projectName;
     public static String htmlDirPath = dirPath + "export/planetary/narration";
+    public static String screenshotPath = dirPath + "screenshots/";
 
     public static Hashtable<String, String[]> dependencies = new Hashtable<String, String[]>();
 
@@ -41,7 +43,7 @@ public class Main {
     public static int slideYOffset = 800;
 
 
-    public static void getOrderofSlides(String notes_path, int level) throws IOException {
+    public static void getOrderOfSlides(String notes_path, int level) throws IOException {
 
         if (DEBUG)
             System.out.println(notes_path);
@@ -66,7 +68,7 @@ public class Main {
             if (!stringArr[i].contains("%") && stringArr[i].contains("mhinputref")) {
                 out = stringArr[i].replaceAll("(.)*mhinputref.{1}", "").replaceAll("}(.)*","").replaceAll(".tex","");
                 top_order.add(level + " " + out);
-                getOrderofSlides(sourcePath + '/' + out + ".tex", level + 1);
+                getOrderOfSlides(sourcePath + '/' + out + ".tex", level + 1);
             }
         }
 
@@ -148,7 +150,6 @@ public class Main {
         );
         for (Object o : pictureFiles) {
             if (o.toString().matches("(\\./)[^/]*.(png|jpg|jpeg)")) {
-                System.out.println("DELETE: " + o.toString());
                 try {
                     File file = new File(o.toString());
                     if (!file.delete()) {
@@ -170,7 +171,7 @@ public class Main {
         );
         for (Object o : pictureFiles) {
             if (DEBUG_IMAGES) {
-                System.out.println(o);
+                System.out.println("Image found: " + o);
             }
             File image_src = new File(o.toString());
             String dest_filename = o.toString().replaceAll(".*/", "");
@@ -203,54 +204,61 @@ public class Main {
 
 
     public static String addSlide(String presentation_name, String slide, int x_offset, int y_offset, int z_offset, int z_rotation) throws IOException {
+        String imgPath = "slide_" + slide.replaceAll("(.*/|.html)","") + ".png";
+        File f = new File(imgPath);
+        if (!f.exists())
+            return "ERR";
+
         presentation_name = presentation_name.concat(".html");
         FileWriter writer = new FileWriter(presentation_name, true);
         writer.write("<div class=\"step slide\" data-x=\"" + x_offset + "\" data-y=\"" + y_offset +  "\" data-z=\"" + z_offset + "\" data-rotate-y=\"" + z_rotation + "\">");
         writer.write("\n");
         writer.write("<header> </header>\n<main>");
         writer.write("\n");
-        writer.write(slide);
+        if (DEBUG)
+            writer.write(slide.replaceAll("(.*/|.html)",""));
         writer.write("\n");
         writer.write("</main>");
         writer.write("\n");
 
-        // Open the file
-        System.out.println("PRESENTATIONNAME: " + slide);
-
-        FileInputStream fstream = null;
-        try {
-            fstream = new FileInputStream(slide);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
-
-        String strLine;
-        boolean metadata = true;
-        //Read File Line By Line
-        while ((strLine = br.readLine()) != null)   {
-            if (metadata) {
-                if (strLine.contains("</omdoc:metadata>")) {
-                    metadata = false;
-                }
-            } else {
-
-                if (DEBUG || DEBUG_SLIDE) {
-                    System.out.println(strLine);
-                }
-
-                if (strLine.contains("</omdoc:omgroup>") || strLine.contains("</body>")) {
-                    break;
-                }
-                writer.write(strLine);
+        if (SCREENSHOT_HACK) {
+            System.out.println("EXISTS");
+            writer.write("<img src=\"" + imgPath + "\" alt=\"" + slide.replaceAll(".*/","") + "\" style=\"height:600px;\">"); //style="width:304px;height:228px"
+        } else {
+            FileInputStream fstream = null;
+            try {
+                fstream = new FileInputStream(slide);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
             }
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+
+            String strLine;
+            boolean metadata = true;
+            //Read File Line By Line
+            while ((strLine = br.readLine()) != null) {
+                if (metadata) {
+                    if (strLine.contains("</omdoc:metadata>")) {
+                        metadata = false;
+                    }
+                } else {
+
+                    if (DEBUG || DEBUG_SLIDE) {
+                        System.out.println(strLine);
+                    }
+
+                    if (strLine.contains("</omdoc:omgroup>") || strLine.contains("</body>")) {
+                        break;
+                    }
+                    writer.write(strLine);
+                }
+            }
+
+            writer.write("\n");
+            //Close the input stream
+            br.close();
         }
-
-        writer.write("\n");
-        //Close the input stream
-        br.close();
-
         writer.write("</div>");
         writer.write("\n");
 
@@ -354,7 +362,10 @@ public class Main {
 
             String DependenciesKey = addSlide(outputPresentationPath, slidePath.toString(), x, y, 0, 0);
 
-            System.out.println("!!SLIDE: " + slidePath.toString());
+            if (DependenciesKey == "ERR") {
+                continue;
+            }
+
             if (dependencies.containsKey(DependenciesKey)) {
                 String[] values = dependencies.get(DependenciesKey);
                 for (int i = 0; i < values.length; i++) {
@@ -473,7 +484,7 @@ public class Main {
         File htmlDir = new File(htmlDirPath);
         Collection htmlFiles = FileUtils.listFiles(htmlDir, new RegexFileFilter("^(.*?)"), DirectoryFileFilter.DIRECTORY);
 
-        getOrderofSlides(notes_path, 0);
+        getOrderOfSlides(notes_path, 0);
         extractRelationalInfo(relationFiles);
 
         setupPresentation(outputPresentationPath, sourcePath);
