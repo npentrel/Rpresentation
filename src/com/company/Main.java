@@ -34,6 +34,8 @@ public class Main {
     public static String outputPresentationPath = projectName;
     public static String htmlDirPath = dirPath + "export/planetary/narration";
     public static String screenshotPath = dirPath + "screenshots/";
+    public static String presentationTitle = "Pythagorean Theorem";
+    public static String presentationAuthor = "Naomi Pentrel";
 
     public static Hashtable<String, String[]> dependencies = new Hashtable<String, String[]>();
 
@@ -41,6 +43,7 @@ public class Main {
 
     public static int slideXOffset = 1250;
     public static int slideYOffset = 800;
+    public static int primaryNarrativePathSlideCount = 0;
 
 
     public static void getOrderOfSlides(String notes_path, int level) throws IOException {
@@ -97,7 +100,7 @@ public class Main {
 //                System.out.println("includesnum: " + includes_num + " " + stringArr[i]);
                 String[] element_includes = new String[includes_num];
                 for (int j = i+1; j < i+1+includes_num && stringArr[j].contains("Includes "); j++) {
-                    element_includes[j - i - 1] = stringArr[j].replaceAll("(Includes )([^\\ ]*)( http:\\/*)(([^\\/]+)(\\/))", "").replaceAll("(.omdoc\\?.*)", "");
+                    element_includes[j - i - 1] = stringArr[j].replaceAll("(Includes )([^\\ ]*)( http:\\/*)(([^\\/]+)(\\/))", "").replaceAll("(.omdoc\\?.*)", "").replaceAll(".omdoc","");
                 }
 
 //                for (int x = 0; x < element_includes.length; x++) {
@@ -213,7 +216,7 @@ public class Main {
         FileWriter writer = new FileWriter(presentation_name, true);
         writer.write("<div class=\"step slide\" data-x=\"" + x_offset + "\" data-y=\"" + y_offset +  "\" data-z=\"" + z_offset + "\" data-rotate-y=\"" + z_rotation + "\">");
         writer.write("\n");
-        writer.write("<header> </header>\n<main>");
+        writer.write("<header>\n<presentationTitle><pTitle>" + presentationTitle " " + "</ptitle> <pAuthor>" + " by " + presentationAuthor + "</pAuthor></presentationTitl>\n</header>\n<main>");
         writer.write("\n");
         if (DEBUG)
             writer.write(slide.replaceAll("(.*/|.html)",""));
@@ -223,7 +226,7 @@ public class Main {
 
         if (SCREENSHOT_HACK) {
             System.out.println("EXISTS");
-            writer.write("<img src=\"" + imgPath + "\" alt=\"" + slide.replaceAll(".*/","") + "\" style=\"height:600px;\">"); //style="width:304px;height:228px"
+            writer.write("<img src=\"" + imgPath + "\" alt=\"" + slide.replaceAll(".*/", "") + "\" style=\"height:600px;\">"); //style="width:304px;height:228px"
         } else {
             FileInputStream fstream = null;
             try {
@@ -286,7 +289,7 @@ public class Main {
         try {
             writer = new FileWriter(presentation_name, true);
             writer.write("<div id=\"overview\" class=\"step\" data-x=\""+ length/2 +"\"\n" +
-                    " data-y=\"0\" data-scale=\"" + (top_order.size()-1) +"\n" +
+                    " data-y=\"0\" data-scale=\"" + primaryNarrativePathSlideCount +"\n" +
                     "\">" +
                     "</div>" +
                     "</div>" +
@@ -364,6 +367,8 @@ public class Main {
 
             if (DependenciesKey == "ERR") {
                 continue;
+            } else {
+                primaryNarrativePathSlideCount++;
             }
 
             if (dependencies.containsKey(DependenciesKey)) {
@@ -372,7 +377,6 @@ public class Main {
                     if (values[i].contains(projectName)) {
                         y += slideYOffset;
 
-                        System.out.println("yes");
                         String dependentSlidePath = htmlDirPath.concat(values[i].toString().replaceAll("MiKoMH/" + projectName, "")).concat(".html");
                         System.out.println("DEP:" + dependentSlidePath);
 
@@ -398,8 +402,8 @@ public class Main {
                                 }
                             } else {
                                 if (sameLevel) {
-                                    System.out.println("here");
-                                    if (currentLevel == (Integer.parseInt(o.toString().replaceAll("( .*)","")))) {
+                                    System.out.println("1here");
+                                    if (currentLevel == (Integer.parseInt(p.toString().replaceAll("( .*)","")))) {
                                         System.out.println("SAME LEVEL!!\n\n");
                                         String dependentContinueSlidePath = htmlDirPath + '/' + p.toString().replaceAll("[0-9]*( )*", "") + ".html";
 

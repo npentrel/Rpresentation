@@ -19,6 +19,11 @@ body {
   text-align:center;
 }
 
+ptitle {
+    font-size: 30px;
+    margin-right: 5px;
+}
+
 header {
     background:url(logo/logo.png) no-repeat left top;
     height:70px;
@@ -30,6 +35,9 @@ header {
     font: inherit;
     vertical-align: baseline;
     background-size: contain;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center; /* align vertical */
 }
 
 main {
@@ -144,4 +152,3 @@ main:before {
   opacity: 1;
   cursor: pointer;
 }
-
