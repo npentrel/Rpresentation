@@ -281,7 +281,7 @@
                             next = document.getElementById(nextId);
                          } else {
                              var nextId = steps[steps.indexOf( active )].id.replace(/(step-)/i, "");
-                             var id = (parseInt(nextId.replace(/[^\d].*/i)) - 1);
+                             var id = (parseInt(nextId.replace(/[^\d].*/i)));
                              nextId = "step-" + id;
                              console.log(nextId);
                              next = document.getElementById(nextId);

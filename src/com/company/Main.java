@@ -23,25 +23,25 @@ public class Main {
     public static final boolean USE_DIALOG = false;
     public static final boolean SCREENSHOT_HACK = true;
     public static final boolean CREATE_DEPENDENCY_PATH = false;
-    public static final boolean PRINT_DEPENDENCY_GRAPH = true;
+    public static final boolean PRINT_DEPENDENCY_GRAPH = false;
 
     // Paths for the directory with relational data and the export html files
 //    public static String projectName = "pythagoreantheorem";
-    public static String projectName = "GenCS";
+    public static String projectName = "thesisPresentation";
 
     public static String mathHubPath = "/Users/Naomi/localmh/MathHub";
     public static String MiKoMH = "/MiKoMH/";
     public static String dirPath = mathHubPath + MiKoMH + projectName + "/";
-//    public static String sourcePath = dirPath + "source";
-    public static String sourcePath = "/Users/Naomi/localmh/MathHub/MiKoMH/GenCS/source";
-//    public static String relationsDirPath = dirPath + "relational2";
-    public static String relationsDirPath = "/Users/Naomi/localmh/MathHub/MiKoMH/GenCS/relational2";
-//    public static String notes_path = sourcePath + "/notes/notes.tex";
-    public static String notes_path = "/Users/Naomi/localmh/MathHub/MiKoMH/CompLog/source/course/notes/notes.tex";
+    public static String sourcePath = dirPath + "source";
+//    public static String sourcePath = "/Users/Naomi/localmh/MathHub/MiKoMH/GenCS/source";
+    public static String relationsDirPath = dirPath + "relational2";
+//    public static String relationsDirPath = "/Users/Naomi/localmh/MathHub/MiKoMH/GenCS/relational2";
+    public static String notes_path = sourcePath + "/notes/notes.tex";
+//    public static String notes_path = "/Users/Naomi/localmh/MathHub/MiKoMH/CompLog/source/course/notes/notes.tex";
     public static String outputPresentationPath = projectName;
     public static String htmlDirPath = dirPath + "export/planetary/narration";
     public static String screenshotPath = dirPath + "screenshots/";
-    public static String presentationTitle = "Gen CS";
+    public static String presentationTitle = "Bachelor Thesis Presentation";
     public static String presentationAuthor = "Naomi Pentrel";
 
     public static Hashtable<String, String[]> dependencies = new Hashtable<String, String[]>();
@@ -127,6 +127,7 @@ public class Main {
 //                for (int x = 0; x < element_includes.length; x++) {
 //                    System.out.println(element_includes[x]);
 //                }
+
                 String new_key = stringArr[i].replaceAll("(theory http:\\/*)(([^\\/]+)\\/)", "").replaceAll("(\\.)(.*)", "");
                 if (!dependencies.containsKey(new_key)) {
                     dependencies.put(new_key, element_includes);
@@ -228,9 +229,9 @@ public class Main {
 
 
     public static String addSlide(String presentation_name, String slide, int x_offset, int y_offset, int z_offset, int z_rotation) throws IOException {
-//        String imgPath = "slide_" + slide.replaceAll("(.*/|.html)","") + ".png";
+        String imgPath = "slide_" + slide.replaceAll("(.*/|.html)","") + ".png";
         System.out.println("here");
-        String imgPath = "slide_theorem.png";
+//        String imgPath = "levels.png";
         File f = new File(imgPath);
         if (!f.exists()) {
             System.out.println(imgPath + " DNE");
@@ -250,7 +251,7 @@ public class Main {
         writer.write("\n");
 
         if (SCREENSHOT_HACK) {
-            writer.write("<img src=\"" + imgPath + "\" alt=\"" + slide.replaceAll(".*/", "") + "\" style=\"height:600px;\">"); //style="width:304px;height:228px"
+            writer.write("<img src=\"" + imgPath + "\" alt=\"" + slide.replaceAll(".*/", "") + "\" style=\"width:800px; margin:auto\">"); //style="width:304px;height:228px"
         } else {
             FileInputStream fstream = null;
             try {
@@ -450,9 +451,9 @@ public class Main {
             x += slideXOffset;
         }
 
-        for (Object p : top_order) {
-            System.out.println(p);
-        }
+//        for (Object p : top_order) {
+//            System.out.println(p);
+//        }
 
         if (DEBUG || true) {
             Enumeration<String> it = dependencies.keys();
