@@ -22,24 +22,26 @@ public class Main {
     public static final boolean RELATION_PARSE_ERRORS = false;
     public static final boolean USE_DIALOG = false;
     public static final boolean SCREENSHOT_HACK = true;
-    public static final boolean CREATE_DEPENDENCY_PATH = true;
-    public static final boolean PRINT_DEPENDENCY_GRAPH = false;
+    public static final boolean CREATE_DEPENDENCY_PATH = false;
+    public static final boolean PRINT_DEPENDENCY_GRAPH = true;
 
     // Paths for the directory with relational data and the export html files
-    public static String projectName = "pythagoreantheorem";
+//    public static String projectName = "pythagoreantheorem";
+    public static String projectName = "GenCS";
+
     public static String mathHubPath = "/Users/Naomi/localmh/MathHub";
     public static String MiKoMH = "/MiKoMH/";
     public static String dirPath = mathHubPath + MiKoMH + projectName + "/";
-    public static String sourcePath = dirPath + "source";
-//    public static String sourcePath = "/Users/Naomi/localmh/MathHub/MiKoMH/CompLog/source";
-    public static String relationsDirPath = dirPath + "relational2";
-//    public static String relationsDirPath = "/Users/Naomi/localmh/MathHub/MiKoMH/GenCS/relational";
-    public static String notes_path = sourcePath + "/notes/notes.tex";
-//    public static String notes_path = "/Users/Naomi/localmh/MathHub/MiKoMH/CompLog/source/course/notes/slides.tex";
+//    public static String sourcePath = dirPath + "source";
+    public static String sourcePath = "/Users/Naomi/localmh/MathHub/MiKoMH/GenCS/source";
+//    public static String relationsDirPath = dirPath + "relational2";
+    public static String relationsDirPath = "/Users/Naomi/localmh/MathHub/MiKoMH/GenCS/relational2";
+//    public static String notes_path = sourcePath + "/notes/notes.tex";
+    public static String notes_path = "/Users/Naomi/localmh/MathHub/MiKoMH/CompLog/source/course/notes/notes.tex";
     public static String outputPresentationPath = projectName;
     public static String htmlDirPath = dirPath + "export/planetary/narration";
     public static String screenshotPath = dirPath + "screenshots/";
-    public static String presentationTitle = "Pythagorean Theorem";
+    public static String presentationTitle = "Gen CS";
     public static String presentationAuthor = "Naomi Pentrel";
 
     public static Hashtable<String, String[]> dependencies = new Hashtable<String, String[]>();
@@ -58,6 +60,7 @@ public class Main {
 
         File f = new File(notes_path);
         if(!f.exists() || f.isDirectory()) {
+            System.out.println("RETURN: " + notes_path);
             return;
         }
 
@@ -80,13 +83,16 @@ public class Main {
                     top_order.add(level + " " + out);
                     if (PRINT_DEPENDENCY_GRAPH)
                         System.out.println("\"" + notes_path.replaceAll(".tex", "").replaceAll(".*source/", "") + "\" -> \"" + out + "\"");
-                    getOrderOfSlides("/Users/Naomi/localmh/MathHub/" + changeProject + "/" + out + ".tex", level + 1);
+                    System.out.println("/Users/Naomi/localmh/MathHub/" + changeProject + "/source/" + out + ".tex");
+                    getOrderOfSlides("/Users/Naomi/localmh/MathHub/" + changeProject + "/source/" + out + ".tex", level + 1);
                 } else {
                     out = stringArr[i].replaceAll("(.)*mhinputref.{1}", "").replaceAll("}(.)*","").replaceAll(".tex", "");
                     top_order.add(level + " " + out);
                     if (PRINT_DEPENDENCY_GRAPH)
                         System.out.println("\"" + notes_path.replaceAll(".tex", "").replaceAll(".*source/", "") + "\" -> \"" + out + "\"");
-                    getOrderOfSlides(sourcePath + '/' + out + ".tex", level + 1);
+                    System.out.println("NO: " + notes_path.replaceAll("source.*",""));
+                    System.out.println(notes_path.replaceAll("source.*","") + "source/" + out + ".tex");
+                    getOrderOfSlides(notes_path.replaceAll("source.*", "") + "source/" + out + ".tex", level + 1);
                 }
             }
         }
@@ -222,7 +228,9 @@ public class Main {
 
 
     public static String addSlide(String presentation_name, String slide, int x_offset, int y_offset, int z_offset, int z_rotation) throws IOException {
-        String imgPath = "slide_" + slide.replaceAll("(.*/|.html)","") + ".png";
+//        String imgPath = "slide_" + slide.replaceAll("(.*/|.html)","") + ".png";
+        System.out.println("here");
+        String imgPath = "slide_theorem.png";
         File f = new File(imgPath);
         if (!f.exists()) {
             System.out.println(imgPath + " DNE");
@@ -364,12 +372,16 @@ public class Main {
         int x = slideXOffset;
         int y = 0;
 
+        System.out.println("here1");
+
         for (Object topSlide : top_order) {
             String topSlidePath = htmlDirPath + '/' + topSlide.toString().replaceAll("[0-9]*( )*", "") + ".html";
 
-            File f = new File(topSlidePath);
-            if(!f.exists() || f.isDirectory()) {
-                continue;
+            if (!SCREENSHOT_HACK) {
+                File f = new File(topSlidePath);
+                if (!f.exists() || f.isDirectory()) {
+                    continue;
+                }
             }
 
             String DependenciesKey = addSlide(outputPresentationPath, topSlidePath.toString(), x, y, 0, 0);
@@ -387,7 +399,7 @@ public class Main {
                         y += slideYOffset;
 
                         String dependentSlidePath = htmlDirPath.concat(values[i].toString().replaceAll("MiKoMH/" + projectName, "")).concat(".html");
-
+                        System.out.println("ADDDING SLIDEEEEEE");
                         addSlide(outputPresentationPath, dependentSlidePath, x, y, 0, 0);
 
                         String currentDependencyKey = dependentSlidePath.replaceAll("(/)(((([^/]*)(/)){9}))", "");
@@ -416,11 +428,12 @@ public class Main {
                                     if (currentLevel == (Integer.parseInt(p.toString().replaceAll("( .*)","")))) {
                                         String dependentContinueSlidePath = htmlDirPath + '/' + p.toString().replaceAll("[0-9]*( )*", "") + ".html";
 
-                                        File g = new File(dependentContinueSlidePath);
-                                        if(!g.exists() || g.isDirectory()) {
-                                            continue;
+                                        if (!SCREENSHOT_HACK) {
+                                            File g = new File(dependentContinueSlidePath);
+                                            if (!g.exists() || g.isDirectory()) {
+                                                continue;
+                                            }
                                         }
-
                                         addSlide(outputPresentationPath, dependentContinueSlidePath, x, y, z, 90);
                                         z -= slideXOffset;
                                     } else {
@@ -441,14 +454,14 @@ public class Main {
             System.out.println(p);
         }
 
-        if (DEBUG) {
+        if (DEBUG || true) {
             Enumeration<String> it = dependencies.keys();
 
             System.out.println(dependencies.size());
             while (it.hasMoreElements()) {
                 String key = it.nextElement();
                 String[] values = dependencies.get(key);
-                if (DEBUG_RELATION) {
+                if (DEBUG_RELATION || true) {
                     System.out.println("Theory path: " + key);
                     for (int i = 0; i < values.length; i++) {
                         System.out.println("Include path: " + values[i]);
@@ -498,7 +511,7 @@ public class Main {
         extractRelationalInfo(relationFiles);
 
         setupPresentation(outputPresentationPath, sourcePath);
-        extractHtmlInformation(htmlFiles);
+//        extractHtmlInformation(htmlFiles);
         int xOverviewLength = addSlidesToPresentation();
         endPresentation(outputPresentationPath, xOverviewLength);
 
