@@ -20,6 +20,7 @@ public class Main {
     public static final boolean SCREENSHOT_HACK = true;
     public static final boolean CREATE_DEPENDENCY_PATH = false;
     public static final boolean PRINT_DEPENDENCY_GRAPH = false;
+    public static final boolean SUPPRESS_WARNINGS = true;
 
     // Paths for the directory with relational data and the export html files
     public static String projectName = "GenCS";
@@ -33,7 +34,7 @@ public class Main {
     public static String notes_path = sourcePath + "/course/notes/notes.tex";
     public static String outputPresentationPath = projectName;
     public static String htmlDirPath = dirPath + "export/planetary/narration";
-    public static String presentationTitle = "Bachelor Thesis Presentation";
+    public static String presentationTitle = "Gen CS Presentation";
     public static String presentationAuthor = "Naomi Pentrel";
 
     public static Hashtable<String, String[]> dependencies = new Hashtable<String, String[]>();
